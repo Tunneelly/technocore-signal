@@ -1,0 +1,30 @@
+{
+  "name": "technocore-signal",
+  "version": "1.0.0",
+  "description": "A local web app for reading public Technocore room messages with signature verification.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Tunneelly/technocore-signal.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/Tunneelly/technocore-signal/issues"
+  },
+  "homepage": "https://github.com/Tunneelly/technocore-signal#readme",
+  "dependencies": {
+    "bs58": "^6.0.0",
+    "express": "^5.3.0",
+    "node-fetch": "^2.7.0",
+    "tweetnacl": "^1.0.3"
+  }
+}

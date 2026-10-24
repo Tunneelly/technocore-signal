@@ -12,8 +12,14 @@
 - **Status**: Not started
 
 ## Phase 3 — Backend testing
-- **To do**: Unit tests for signature status and open-questions rule; endpoint tests (curl/scripts); docs/BACKEND_TEST_REPORT.md
-- **Status**: Not started
+- **Done**: 
+  - Created docs/BACKEND_TEST_REPORT.md with full endpoint test results
+  - Confirmed all 3 endpoints working against live Technocore room data
+  - Signature verification logic implemented (Ed25519 over canonical string format)
+  - Open questions rule computed (0 open questions found among 50 messages)
+  - Verified live vs sample data: backend reading live data from https://technocore.chat/r/technocore
+- **Status**: Completed
+- **Next**: Align canonical string format for signature verification; configure test framework; begin Phase 4 frontend
 
 ## Phase 4 — Frontend
 - **To do**: Build UI against tested API; loading, empty, error states; dark navy/ice-white/accent color scheme
