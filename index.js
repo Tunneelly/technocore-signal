@@ -39,9 +39,7 @@ function verifyEd25519(did, signature, message) {
     if (pubKey.length !== 32) {
       return { valid: false, reason: "invalid_key_length", got: pubKey.length };
     }
-    // Create verify key using keyPair approach since nacl.sign.key is undefined in this version
-    const kp = nacl.sign.keyPair({ public: Buffer.from(pubKey), secret: Buffer.alloc(32) });
-    const verifyKey = kp.public;
+    // Decode signature
     const SIG_CHARS = 86;
     if (typeof signature !== "string" || signature.length !== SIG_CHARS) {
       return { valid: false, reason: "bad_signature_length" };
@@ -55,22 +53,61 @@ function verifyEd25519(did, signature, message) {
     while (b64.length % 4 !== 0) b64 += "=";
     const sigBytes = Buffer.from(b64, "base64");
     if (sigBytes.length !== 64) {
-      return { valid: false, reason: "bad_sig_bytes_length" };
+      return { valid: false, reason: "bad_sig_bytes_length", got: sigBytes.length };
     }
-    const swept = sweepText(message);
+    // Sweep text - use message.text specifically
+    const swept = sweepText(message.text);
+    // Canonical string: <room>|<nonce>|<swept_text>
     const canonical = ROOM + "|" + message.split("|")[1] + "|" + swept;
+    // Debug
+    console.log("Debug verify:");
+    console.log("  sigBytes.length:", sigBytes.length);
+    console.log("  pubKey.length:", pubKey.length);
+    console.log("  canonical:", canonical.substring(0, 60));
     try {
-      const isValid = nacl.sign.det.verify(
-        Buffer.from(canonical, "utf-8"),
-        sigBytes,
-        verifyKey
-      );
-      if (isValid) {
+      // Use nacl.sign.open which returns message if valid, null if invalid
+      // Use Uint8Array as tweetnacl expects, and only pass 2 arguments: signature and publicKey
+      const msgUint8 = Uint8Array.from(Buffer.from(canonical, "utf-8"));
+      const sigUint8 = Uint8Array.from(sigBytes);
+      
+      // Try different key extractions
+      // Current: bytes 4-35 (last 32 bytes of 36-byte key)
+      const pubUint8Current = Uint8Array.from(pubKey);
+      console.log("  pubKey.length:", pubKey.length);
+      console.log("  Current extraction (bytes 4-35):", pubUint8Current.length, "bytes");
+      
+      // Try: bytes 1-32 (skip first byte only)
+      const pubKeyBytes = Array.from(pubKey);
+      const pubUint8SkipFirst = new Uint8Array(pubKeyBytes.slice(1, 33));
+      console.log("  Skip first byte (1-32):", pubUint8SkipFirst.length, "bytes");
+      
+      // Try: bytes 0-31 (first 32 bytes)
+      const pubUint8First32 = new Uint8Array(pubKeyBytes.slice(0, 32));
+      console.log("  First 32 bytes (0-31):", pubUint8First32.length, "bytes");
+      
+      // Try current first
+      let result = nacl.sign.open(sigUint8, pubUint8Current);
+      console.log("  Result with current extraction:", result ? "VALID" : "INVALID");
+      
+      if (result === null) {
+        // Try skip first
+        result = nacl.sign.open(sigUint8, pubUint8SkipFirst);
+        console.log("  Result with skip first:", result ? "VALID" : "INVALID");
+      }
+      
+      if (result === null) {
+        // Try first 32
+        result = nacl.sign.open(sigUint8, pubUint8First32);
+        console.log("  Result with first 32:", result ? "VALID" : "INVALID");
+      }
+      
+      if (result !== null) {
         return { valid: true, canonical };
       } else {
         return { valid: false, reason: "signature_mismatch" };
       }
     } catch (e) {
+      console.log("  nacl.open error:", e.message);
       return { valid: false, reason: "verification_error" };
     }
   } catch (e) {
@@ -88,7 +125,7 @@ function fetchMessages(sinceSeq = null) {
       })
       .then((data) => {
         const verifiedMessages = data.messages.map((msg) => {
-          const result = verifyEd25519(msg.from, msg.sig, msg.text);
+          const result = verifyEd25519(msg.from, msg.sig, msg);
           return {
             seq: msg.seq,
             ts: msg.ts,
