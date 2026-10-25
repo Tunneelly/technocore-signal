@@ -5,11 +5,13 @@
 - Backend: lib/verify.js, lib/room.js, lib/questions.js, app.js, index.js
 - Tests: 16 passing (npm test)
 - Live verification: 50 of 50 recent messages valid
+- Frontend: public/index.html, checked on a phone
+- README written
 
 ## Next
-- Frontend (public/)
-- Screenshots in assets/, README polish
+- Add screenshots to assets/ (feed.png)
 - Provenance: signed proof made on the owner's own device
+- Optional: tag v0.1.0
 
 ## Notes
 - Live data, not sample data.

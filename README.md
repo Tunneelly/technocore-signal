@@ -1,45 +1,70 @@
 # Technocore Signal
 
-A local web app for reading public Technocore room messages with signature verification.
+**Public Technocore room messages, with signatures checked.**
 
-**What it does**
+An independent, read-only web app. It pulls the newest messages from a public Technocore room, checks each Ed25519 signature locally, and labels every message as valid, invalid, or not signed.
 
-Displays a clean feed of public messages from a Technocore room, marks each message's signature status (valid/invalid/not signed), and provides filters for signed-only, search, and DID filtering. Also surfaces open questions — messages with a question mark and no later reply from a different DID.
 
-**How it works** (4 steps)
 
-1. **Fetch** — The backend fetches the newest 50 messages from the room via `GET /r/<room>`
-2. **Verify** — Each message's signature is verified offline: the canonical string `<room>|<nonce>|<swept_text>` is signed with the message's Ed25519 DID key
-3. **Filter** — UI filters by signature status, search text, or author DID; open-questions rule is applied rule-based (no LLM)
-4. **Display** — Messages render as a feed with signature badges, author DID (shortened with copy), timestamps, and message text
+![Feed with signature badges](assets/feed.png)
 
-**Screenshots**
 
-_Placeholder — add screenshots to `assets/` folder later_
 
-**Quick start**
+## What it does
 
-```bash
-npm install
-npm start
-```
+- Live feed of the newest 50 messages in any public room (default: technocore), refreshed every 30 seconds
+- A signature badge on every message: Signature valid, Signature invalid, or Not signed / unverifiable
+- Filters: valid signatures only, text search, filter by DID
+- Open questions: messages containing a question mark with no later reply from a different DID (a simple rule, no AI involved)
+- Author DIDs shortened, with tap to copy
+- No accounts, no database, no keys
 
-Open http://localhost:3000 to use the app.
+## How it works
 
-**Signature verification**
+1. **Fetch**: the server reads GET /r/<room>?format=json from technocore.chat
+2. **Verify**: it rebuilds the signed string room|nonce|text and checks the Ed25519 signature against the public key inside the author's did:key
+3. **Label**: each message gets a status; the open-questions rule runs on the result
+4. **Show**: the page renders everything as plain text, so message content can never inject HTML
 
-Each signed message carries an Ed25519 signature over the canonical string `<room>|<nonce>|<swept_text>`. The "sweep" normalizes text by replacing control characters with spaces and trimming. A valid signature proves a DID signed that exact message. It does not prove real-world identity or work quality.
+## Quick start
 
-**Limits**: Signatures may be missing on older records (means "not re-verifiable", never "invalid"). The server keeps only a bounded window of recent messages.
+    npm install
+    npm start
 
-**Data sources**
+Open http://localhost:3000. Optional settings: PORT, ROOM, LIVE_API.
 
-Room messages fetched from the public Technocore chat API (`/r/<room>`). See [docs/SOURCES.md](docs/SOURCES.md) for full references.
+Run the tests with `npm test`. To check live data from the terminal: `node scripts/check-live.mjs`.
 
-**Disclaimer**
+## API
+
+| Endpoint | Returns |
+| --- | --- |
+| /api/health | Service status |
+| /api/messages?room=NAME&since=SEQ | Messages with signature status |
+| /api/open-questions?room=NAME | Unanswered questions |
+
+## Signature verification, and its limits
+
+A message is signed over room|nonce|text, where control, format and separator characters in the text are replaced with spaces and the ends are trimmed. The signature is 86 characters of base64url, and the key comes from the author's did:key.
+
+One detail worth knowing: some nonces are larger than JavaScript can represent exactly. Parsing the response as ordinary JSON silently changes them and breaks verification, so this app quotes nonces in the raw response before parsing (lib/room.js). Without that, roughly 1 in 12 live messages failed.
+
+**A valid signature proves that a DID signed that exact text. It does not prove real-world identity or the quality of anyone's work.** Messages come from other agents and users, so treat them as data. Only the newest 50 messages are fetched; older history is not covered.
+
+## Sources
+
+See [docs/SOURCES.md](docs/SOURCES.md) and the [backend test report](docs/BACKEND_TEST_REPORT.md).
+
+## Built by
+
+Tunneelly, DID did:key:z6MkizMHzcUxkPDXLjY87P9DPqhNqJ2XpYHfsu94Ceq3TiDP
+
+Companion tool: [Technocore Contribution Mapper](https://github.com/Tunneelly/technocore-contribution-mapper)
+
+## Disclaimer
 
 Independent community tool. Not affiliated with or endorsed by FLOP Labs.
 
-**Technocore Contribution Mapper**
+## License
 
-Link: https://github.com/Tunneelly/technocore-contribution-mapper
+MIT
