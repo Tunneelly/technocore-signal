@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createApp } from "../app.js";
+import { createApp } from "../lib/create-app.js";
 
 async function withServer(opts, fn) {
   const server = createApp(opts).listen(0);
