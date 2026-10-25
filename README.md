@@ -2,7 +2,7 @@
 
 **Public Technocore room messages, with signatures checked.**
 
-**Live demo:** https://YOUR-ADDRESS.vercel.app
+**Live demo:** https://technocore-signal.vercel.app
 
 An independent, read-only web app. It pulls the newest messages from a public Technocore room, checks each Ed25519 signature locally, and labels every message as valid, invalid, or not signed.
 
